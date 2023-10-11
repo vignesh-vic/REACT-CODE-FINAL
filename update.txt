@@ -1,0 +1,137 @@
+To update the values in the existing row when you click "OK" in the update form, you need to identify the index of the row you're updating and replace the values in the `myProduct` state array at that index. Here's the updated code:
+
+```javascript
+import React, { useState, useEffect } from 'react';
+// ... (other import statements)
+
+export default function JSONtask() {
+  // ... (previous code)
+
+  const [isUpdateForm, setIsUpdateForm] = useState(false); // State to track whether the update form is open
+  const [isUpdateClicked, setIsUpdateClicked] = useState(false); // State to track whether the "Update" button is clicked
+  const [updateRowIndex, setUpdateRowIndex] = useState(null); // State to store the index of the row being updated
+
+  // ... (other code)
+
+  const onHandleChange = (e) => {
+    const { name, value } = e.target;
+    setShowDetails((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // Check if all required fields have values
+    const { title, description, category, price, rating, stock } = showDetails;
+    const isRequiredFieldsFilled = title && description && category && price && rating && stock;
+    setIsOKEnabled(isRequiredFieldsFilled);
+  };
+
+  // ... (other code)
+
+  const showModal1 = (resiveObj, index) => {
+    if (resiveObj) {
+      setShowDetails({
+        title: resiveObj.title,
+        description: resiveObj.description,
+        category: resiveObj.category,
+        price: resiveObj.price,
+        rating: resiveObj.rating,
+        stock: resiveObj.stock,
+      });
+    }
+
+    setIsUpdateForm(true); // Set the update form to open
+    setIsUpdateClicked(true); // Set the "Update" button clicked
+    setIsModalOpen(true);
+    setUpdateRowIndex(index); // Set the index of the row being updated
+  };
+
+  const onHandleSubmit = () => {
+    // Check if required fields are not empty
+    const { title, description, category, price, rating, stock } = showDetails;
+    if (!title || !description || !category || !price || !rating || !stock) {
+      return;
+    }
+
+    if (isUpdateClicked && updateRowIndex !== null) {
+      // Update the existing row at the specified index
+      const updatedProduct = {
+        ...myProduct[updateRowIndex],
+        title,
+        description,
+        category,
+        price,
+        rating,
+        stock,
+      };
+      const updatedMyProduct = [...myProduct];
+      updatedMyProduct[updateRowIndex] = updatedProduct;
+      setProduct(updatedMyProduct);
+    } else {
+      // Calculate the new ID based on the length of myProduct array
+      const newId = generateUniqueID();
+
+      // Create a new product object with the calculated ID and other details
+      const newProduct = {
+        id: newId,
+        title,
+        description,
+        category,
+        price,
+        rating,
+        stock,
+        image: '', // You can set the image as needed
+      };
+
+      // Add the new product to the myProduct array
+      setProduct([newProduct, ...myProduct]);
+    }
+
+    // Clear the input fields and reset the form
+    setShowDetails({
+      title: '',
+      description: '',
+      category: '',
+      price: '',
+      rating: '',
+      stock: '',
+      image: '',
+    });
+    setIsOKEnabled(false); // Disable "OK" button
+    setIsUpdateForm(false); // Close the update form
+    setIsUpdateClicked(false); // Reset "Update" button clicked
+    setUpdateRowIndex(null); // Reset the updateRowIndex
+  };
+
+  // ... (other code)
+
+  return (
+    <div>
+      <Button
+        type="primary"
+        onClick={() => {
+          showModal();
+          setShowDetails({
+            title: '',
+            description: '',
+            category: '',
+            price: '',
+            rating: '',
+            stock: '',
+          });
+          setIsOKEnabled(false); // Disable "OK" button initially
+          setIsUpdateForm(false); // Close the update form
+          setIsUpdateClicked(false); // Reset "Update" button clicked
+          setUpdateRowIndex(null); // Reset the updateRowIndex
+        }}
+      >
+        ADD Product
+      </Button>
+
+      {/* ... (other code) */}
+    </div>
+  );
+}
+```
+
+This code keeps track of the `updateRowIndex` to determine which row to update. If you open the update form, make changes, and click "OK," it will update the existing row. If you add a new product, it will create a new row as before.
