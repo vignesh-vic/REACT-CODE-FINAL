@@ -31,6 +31,11 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
+const filterOptions = createFilterOptions({
+  matchFrom: 'start',
+  stringify: (option) => option.title,
+});
+
 
 
 export default function JSONtask() {
@@ -70,7 +75,6 @@ const [emptydel,setempty]=useState(0)
       id:'',
       title: "",
       description: "",
-      category: "",
       price: "",
       rating: "",
       stock: "",
@@ -85,8 +89,8 @@ const [emptydel,setempty]=useState(0)
       [name]: value,
     }));
 
-    const { title, description, category, price, rating, stock } = showDetails;
-    const isRequiredFieldsFilled = title && description && category && price && rating && stock;
+    const { title, description, price, rating, stock } = showDetails;
+    const isRequiredFieldsFilled = title && description && price && rating && stock;
     setIsOKEnabled(isRequiredFieldsFilled);
   };
 
@@ -126,7 +130,6 @@ const onHandleDelte=(index)=>{
   setShowDetails({
     title: "",
     description: "",
-    category: "",
     price: "",
     rating: "",
     stock: "",
@@ -168,7 +171,6 @@ const onHandleDelte=(index)=>{
       id: newId,
       title: showDetails.title,
       description: showDetails.description,
-      category: showDetails.category,
       price: showDetails.price,
       rating: showDetails.rating,
       stock: showDetails.stock,
@@ -182,7 +184,6 @@ const onHandleDelte=(index)=>{
     setShowDetails({
       title: "",
       description: "",
-      category: "",
       price: "",
       rating: "",
       stock: "",
@@ -199,7 +200,6 @@ const onHandleDelte=(index)=>{
       setShowDetails({
         title: resiveObj.title,
         description: resiveObj.description,
-        category: resiveObj.category,
         price: resiveObj.price,
         rating:resiveObj.rating,
         stock: resiveObj.stock,
@@ -275,7 +275,7 @@ const onHandleDelte=(index)=>{
           value={showDetails.description}
           onChange={onHandleChange}
         />{" "}
-      
+       
         <br />
         <input
           name="price"
@@ -311,7 +311,6 @@ const onHandleDelte=(index)=>{
             <TableRow>
               <StyledTableCell>ID</StyledTableCell>
               <StyledTableCell>TITLE</StyledTableCell>
-              <StyledTableCell>CATEGORY</StyledTableCell>
               <StyledTableCell>PRICE</StyledTableCell>
               <StyledTableCell>RATING</StyledTableCell>
               <StyledTableCell>STAOCK</StyledTableCell>
@@ -327,7 +326,6 @@ const onHandleDelte=(index)=>{
                 <StyledTableRow key={row.index}>
                 <StyledTableCell>{row?.id}</StyledTableCell>
                 <StyledTableCell>{row?.title}</StyledTableCell>
-                <StyledTableCell>{row?.category}</StyledTableCell>
                 <StyledTableCell>{row?.price}</StyledTableCell>
                 <StyledTableCell>{row?.rating}</StyledTableCell>
                 <StyledTableCell>{row?.stock}</StyledTableCell>
