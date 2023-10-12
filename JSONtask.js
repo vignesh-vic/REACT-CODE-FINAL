@@ -1,6 +1,5 @@
-// import * as React from 'react';
 import TextField from '@mui/material/TextField';
-import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
+import Autocomplete from '@mui/material/Autocomplete';
 import { Button, Modal } from 'antd';
 import { styled } from "@mui/material/styles";
 import Table from "@mui/material/Table";
@@ -31,15 +30,12 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
-const filterOptions = createFilterOptions({
-  matchFrom: 'start',
-  stringify: (option) => option.title,
-});
+
 
 
 
 export default function JSONtask() {
-
+  //enable and diable button
   const [isOKEnabled, setIsOKEnabled] = useState(false);
 
     //input model
@@ -70,14 +66,21 @@ const [emptydel,setempty]=useState(0)
     };
 
 
+    //JSON fetch datas
+  const [myProduct, setProduct] = useState([]);
+
+  const [updateRowIndex, setUpdateRowIndex] = useState(null);
+
   const [showDetails, setShowDetails] = useState([
     {
       id:'',
       title: "",
+      brand:"",
       description: "",
       price: "",
       rating: "",
       stock: "",
+      category: "",
       image: "",
     },
   ]);
@@ -89,22 +92,24 @@ const [emptydel,setempty]=useState(0)
       [name]: value,
     }));
 
-    const { title, description, price, rating, stock } = showDetails;
-    const isRequiredFieldsFilled = title && description && price && rating && stock;
+    const { title,brand, description, price, rating, stock ,category } = showDetails;
+    const isRequiredFieldsFilled = title && brand && description && price && rating && stock && category;
     setIsOKEnabled(isRequiredFieldsFilled);
   };
 
-  const [myProduct, setProduct] = useState([]);
+
 
   useEffect(() => {
     fetch("https://dummyjson.com/products")
       .then((res) => res.json())
       .then((data) => {
+        console.log(data);
         const pushData = [];
         for (let i = 0; i < 20; i++) {
           pushData.push({
             id: data.products[i].id,
             title: data.products[i].title,
+            brand: data.products[i].brand,            
             description: data.products[i].description,
             category: data.products[i].category,
             price: data.products[i].price,
@@ -129,10 +134,12 @@ const onHandleDelte=(index)=>{
   })
   setShowDetails({
     title: "",
+    brand:"",
     description: "",
     price: "",
     rating: "",
     stock: "",
+    category:""
   });  
   
   }
@@ -146,34 +153,18 @@ const onHandleDelte=(index)=>{
   };
 
   const onHandleSubmit = () => {
-    // Check if required fields are not empty
-    // if (
-    //   !showDetails.title ||
-    //   !showDetails.description ||
-    //   !showDetails.category ||
-    //   !showDetails.price ||
-    //   !showDetails.rating ||
-    //   !showDetails.stock
-    // ) {
-    //   return;
-    // }
-
-    // Calculate the new ID based on the length of myProduct array
-    // const newId = myProduct.length + 1;
-
     const newId = generateUniqueID();
-
-
-
 
     // Create a new product object with the calculated ID and other details
    myProduct.unshift({
       id: newId,
       title: showDetails.title,
+      brand:showDetails.brand,
       description: showDetails.description,
       price: showDetails.price,
       rating: showDetails.rating,
       stock: showDetails.stock,
+      category:showDetails.category,
       image: "", // You can set the image as needed
     }
     )
@@ -183,47 +174,93 @@ const onHandleDelte=(index)=>{
     // Clear the input fields
     setShowDetails({
       title: "",
+      brand:'',
       description: "",
       price: "",
       rating: "",
       stock: "",
+      category:"",
       image: "",
     });
 
     setIsModalOpen(false); // Close the modal
   };
 
-  //edit button
-  const showModal1 = (resiveObj) => {
+  const showModal1 = (resiveObj, index) => {
     setIsModalOpen(true);
     if (resiveObj) {
       setShowDetails({
         title: resiveObj.title,
+        brand: resiveObj.brand,
         description: resiveObj.description,
         price: resiveObj.price,
-        rating:resiveObj.rating,
+        rating: resiveObj.rating,
         stock: resiveObj.stock,
+        category:resiveObj.category
       });
     }
-    setIsModalOpen(true);
+    setUpdateRowIndex(index); // Set the index of the product to be updated
   };
 
+  const [myFilter,setFilter]=useState()
+  const [myBrand,setBrand]=useState()
+  const [myPrice,setPrice]=useState()
+ const categories = Array.from(new Set(myProduct.map(item => item.category)).values());
+ const BRAND = Array.from(new Set(myProduct.map(item => item.brand)).values());
+  // Create a state variable for the selected price range
+  const [selectedPriceRange, setSelectedPriceRange] = useState({
+    min: 0,
+    max: 1749, // You can adjust the min and max values as needed
+  });
+ const filterData = myProduct.filter((item) => {
+  if (!myFilter && !myBrand) {
+    return (
+      item.price >= selectedPriceRange.min &&
+      item.price <= selectedPriceRange.max
+    );
+  }
+  if (myFilter && myBrand) {
+    return (
+      item.category === myFilter &&
+      item.brand === myBrand &&
+      item.price >= selectedPriceRange.min &&
+      item.price <= selectedPriceRange.max
+    );
+  }
+  if (myFilter) {
+    return (
+      item.category === myFilter &&
+      item.price >= selectedPriceRange.min &&
+      item.price <= selectedPriceRange.max
+    );
+  }
+  if (myBrand) {
+    return (
+      item.brand === myBrand &&
+      item.price >= selectedPriceRange.min &&
+      item.price <= selectedPriceRange.max
+    );
+  }
+  if (myPrice) {
+    return item.price === myPrice;
+  }
+  return false; // Return false for cases not covered
+});
 
-  const categories = [
-    'All', 'smartphones', 'laptops', 'fragrances', 'skincare'
-  ];
-
-  
+// const categoryFilter=myFilter?myProduct.filter((items)=>items.category===myFilter):myProduct
+// const brandFilter=myFilter?myProduct.filter((items)=>items.category===myFilter):categoryFilter
   return (
     
     <div>
-      
+  
+    
       <Button
         type="primary"
         onClick={() => {
           showModal();
           setShowDetails({
             title: "",
+            brand:"",
             description: "",
             category: "",
             price: "",
@@ -236,21 +273,33 @@ const onHandleDelte=(index)=>{
         }}
       >
         ADD Product{" "}
-      </Button>
-     
+      </Button><br/><br/>
+
       <Autocomplete
-        id="filter-demo"
-        options={categories}
-        sx={{ width: 300 }}
-        renderInput={(params) => <TextField {...params} label="Filter by Category" />}
-        value={showDetails.category}
-        onChange={(_, newValue) => {
-          setShowDetails((prev) => ({
-            ...prev,
-            category: newValue,
-          }));
-        }}
-      />
+      id="disabled-options-demo"
+      options={categories}
+      value={myFilter}
+      getOptionLabel={(option) =>option}
+      onChange={(_,value)=>{
+        setFilter(value)
+      }}
+      sx={{ width: 300 }}
+      renderInput={(params) => <TextField {...params} label="CATEGORY" />}
+    />
+    <br/>
+      <Autocomplete
+      id="disabled-options-demo"
+      options={BRAND}
+      value={myBrand}
+      getOptionLabel={(option) =>option}
+      onChange={(_,value)=>{
+        setBrand(value)
+      }}
+      sx={{ width: 300 }}
+      renderInput={(params) => <TextField {...params} label="BRAND" />}
+    />
+    
+
       <Modal
         open={isModalOpen}
         onOk={() => {
@@ -260,13 +309,21 @@ const onHandleDelte=(index)=>{
         onCancel={handleCancel}
         okButtonProps={{ disabled: !isOKEnabled }} // Disable "OK" button if isOKEnabled is false
       >
+        
         <input
           name="title"
           placeholder="title"
           style={{ height: "30px", width: "360px", marginBottom: "6px" }}
           value={showDetails.title}
           onChange={onHandleChange}
-        />{" "}
+        />
+        <input
+          name="brand"
+          placeholder="brand"
+          style={{ height: "30px", width: "360px", marginBottom: "6px" }}
+          value={showDetails.brand}
+          onChange={onHandleChange}
+        />
         <br />
         <input
           style={{ height: "30px", width: "360px", marginBottom: "6px" }}
@@ -305,16 +362,33 @@ const onHandleDelte=(index)=>{
       <h3 style={{ float: "right" }}>
         TOTAL Number of Rows {myProduct.length}
       </h3>
+      <input
+        type="range"
+        min="0"
+        max="1749" // You can adjust the min and max values as needed
+        step="1"
+        value={selectedPriceRange.min}
+        onChange={(e) =>
+          setSelectedPriceRange({
+            ...selectedPriceRange,
+            min: parseInt(e.target.value),
+          })
+        }
+      />
+      <div>{selectedPriceRange.min} - {selectedPriceRange.max}
+</div>
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 700 }} aria-label="customized table">
           <TableHead>
             <TableRow>
               <StyledTableCell>ID</StyledTableCell>
               <StyledTableCell>TITLE</StyledTableCell>
+              <StyledTableCell>DESCRIPTION</StyledTableCell>
+              <StyledTableCell>BRAND</StyledTableCell>
               <StyledTableCell>PRICE</StyledTableCell>
               <StyledTableCell>RATING</StyledTableCell>
               <StyledTableCell>STAOCK</StyledTableCell>
-              <StyledTableCell></StyledTableCell>
+              <StyledTableCell>CATEGORY</StyledTableCell>
               <StyledTableCell></StyledTableCell>
               <StyledTableCell>IMAGE</StyledTableCell>
               <StyledTableCell>DELETE</StyledTableCell>
@@ -322,14 +396,16 @@ const onHandleDelte=(index)=>{
             </TableRow>
           </TableHead>
           <TableBody>
-           {myProduct.length>0?myProduct.map((row,index) => (
+           {myProduct.length>0?filterData.map((row,index) => (
                 <StyledTableRow key={row.index}>
                 <StyledTableCell>{row?.id}</StyledTableCell>
                 <StyledTableCell>{row?.title}</StyledTableCell>
+                <StyledTableCell>{row?.description}</StyledTableCell>
+                <StyledTableCell>{row?.brand}</StyledTableCell>
                 <StyledTableCell>{row?.price}</StyledTableCell>
                 <StyledTableCell>{row?.rating}</StyledTableCell>
                 <StyledTableCell>{row?.stock}</StyledTableCell>
-                <StyledTableCell></StyledTableCell>
+                <StyledTableCell>{row?.category}</StyledTableCell>
                 <StyledTableCell></StyledTableCell>
                 <StyledTableCell>
                   <img style={{ width: "90px" }} alt="hi" src={row.image} />
@@ -352,15 +428,12 @@ const onHandleDelte=(index)=>{
         ARE YOU CONFIRM TO DELETE</Modal>
                 </StyledTableCell>
                 <StyledTableCell>
-                  <Button
-                    type="primary"
-                    onClick={() => {
-                      showModal1(row);
-                      setIsOKEnabled(true);
-                    }}
-                  >
-                    UPDATE
-                  </Button>
+                <Button
+    type="primary"
+    onClick={() => showModal1(row, index)}
+  >
+    UPDATE
+  </Button>
                 </StyledTableCell>
               </StyledTableRow>
             )):(<StyledTableCell align="center">NO DATA in the table</StyledTableCell>)}
