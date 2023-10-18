@@ -1,6 +1,4 @@
-import Box from "@mui/material/Box";
 import Rating from "@mui/material/Rating";
-import Slider from "@mui/material/Slider";
 import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
 import { Button, Modal } from "antd";
@@ -36,22 +34,21 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 }));
 
 export default function JSONtask() {
-  //enable and diable button
-  const [val, setVal] = useState();
+  
+  //store id in the state to find id to replace to update values
+  const [passingId, setPassingId] = useState();
 
-  const [button, setButton] = useState(0);
+  //When button is 0, it indicates that you are in "add" mode. When button is 1, it means you are in "update" mode.
+  const [changeButtonMode, setchangeButtonMode] = useState(0);
 
-  const [filter, setFilterto] = useState({
-    type: [],
-
-    categ: [],
-
-    pri: "",
-
+  const [manageFilter, setManageFilter] = useState({
+    brandType: [],
+    categoryType: [],
+    filterPrice: "",
     rate: "",
   });
 
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const showModal = () => {
     setOpen(true);
@@ -81,7 +78,6 @@ export default function JSONtask() {
   //JSON fetch datas
   const [myProduct, setProduct] = useState([]);
 
-  const [updateRowIndex, setUpdateRowIndex] = useState(null);
 
   const [showDetails, setShowDetails] = useState([
     {
@@ -127,6 +123,7 @@ export default function JSONtask() {
         setProduct([...myProduct, ...pushData]);
       });
   }, []);
+ 
 
   //delete button
   const onHandleDelte = (index) => {
@@ -135,6 +132,7 @@ export default function JSONtask() {
       preData.splice(index, 1);
       return preData;
     });
+
     setShowDetails({
       title: "",
       brand: "",
@@ -145,27 +143,20 @@ export default function JSONtask() {
       category: "",
     });
   };
-  const generateprice = () => {
-    const maxID = myProduct.reduce(
-      (max, user) => (user.price > max ? user.price : max),
-      
-    );
 
-    return maxID;
-  };
 
   const generateUniqueID = () => {
     const maxID = myProduct.reduce(
-      (max, user) => (user.id > max ? user.id : max),
+      (max, user) => (user.id > max ? user.id : max),0
       
     );
 
     return maxID + 1;
   };
 
+  //add user
   const onHandleSubmit = () => {
     const newId = generateUniqueID();
-
     // Create a new product object with the calculated ID and other details
     myProduct.unshift({
       id: newId,
@@ -177,9 +168,7 @@ export default function JSONtask() {
       stock: showDetails.stock,
       category: showDetails.category,
     });
-    // Add the new product to the myProduct array
-    // setProduct([newProduct,...myProduct]);
-
+  
     // Clear the input fields
     setShowDetails({
       title: "",
@@ -192,11 +181,10 @@ export default function JSONtask() {
       image: "",
     });
 
-    // setIsModalOpen(false); // Close the modal
   };
 
+  
   const showModal1 = (resiveObj, index) => {
-    // setIsModalOpen(true);
     if (resiveObj) {
       setShowDetails({
         title: resiveObj.title,
@@ -209,12 +197,11 @@ export default function JSONtask() {
       });
     }
 
-    setVal(resiveObj.id);
-    setUpdateRowIndex(index); // Set the index of the product to be updated
+    setPassingId(resiveObj.id);
   };
 
-  // handleEditOk
 
+  // handleEditOk
   const handleEditOk = (id) => {
     const index = myProduct.findIndex((item) => item?.id === id);
     if (index > -1) {
@@ -229,48 +216,51 @@ export default function JSONtask() {
         stock: showDetails.stock,
         images: showDetails?.images,
       };
-
       setProduct([...myProduct]);
-      console.log(myProduct);
     }
   };
 
-  const [myRating, setRating] = useState();
 
-  var filteredItem = [];
-  for (var i = 0; i < filter?.type?.length; i++) {
-    const dummy = myProduct.filter((item) => item?.brand === filter?.type[i]);
-    filteredItem.push(...dummy);
+  //brand multiple filtering 
+  var brandFilteredItem = [];
+  for (var i = 0; i < manageFilter?.brandType?.length; i++) {
+    const brandFilter = myProduct.filter((item) => item?.brand === manageFilter?.brandType[i]);
+    brandFilteredItem.push(...brandFilter);
   }
 
-  const filteredItems = filteredItem?.length === 0 ? myProduct : filteredItem;
 
-  var filteredItem1 = [];
-  for (var i = 0; i < filter?.categ?.length; i++) {
-    const dummy = filteredItems.filter(
-      (item) => item?.category === filter?.categ[i]
-    );
-    filteredItem1.push(...dummy);
+//if i select multiple brand means it will show only filter data otherwise default data
+  const brandFilteredItems = brandFilteredItem?.length === 0 ? myProduct : brandFilteredItem;
+
+
+//category multiple filtering 
+  var categoryFilterItem = [];
+  for (var j = 0; j < manageFilter?.categoryType?.length; j++) {
+    const categoryFilter = brandFilteredItems.filter((item) => item?.category === manageFilter?.categoryType[j] );
+    categoryFilterItem.push(...categoryFilter);
   }
-  const filteredItems1 =
-    filteredItem1?.length === 0 ? filteredItems : filteredItem1;
 
-  const filteredItems2 = filter?.pri
-    ? filteredItems1.filter((item) => item?.price <= filter?.pri)
-    : filteredItems1;
-console.log(filter.rate,"$");
-  const filteredItems3 = filter?.rate
-    ? filteredItems2.filter((item) => item?.rating <= filter?.rate)
-    : filteredItems2;
+//if i select multiple category means it will show only filter data otherwise default data
+  const categoryFilteredItems = categoryFilterItem?.length === 0 ? brandFilteredItems : categoryFilterItem;
+
+//price filtering
+  const priceFilteredItems = manageFilter?.filterPrice? categoryFilteredItems.filter((item) => item?.price <= manageFilter?.filterPrice): categoryFilteredItems;
+
+  const filteredItems3 = manageFilter?.rate? priceFilteredItems.filter((item) => item?.rating <= manageFilter?.rate) : priceFilteredItems;
   
-
+  //list of categories for show in autocomplete in array format
   const categories = Array.from(
     new Set(myProduct.map((item) => item?.category)).values()
   );
+
+  //list of brands for show in autocomplete in array format
   const BRAND = Array.from(
     new Set(myProduct.map((item) => item?.brand)).values()
   );
-  const max = myProduct.reduce((max, item) => (item?.price > max ? item?.price : max), 0);
+
+
+/* The above code is finding the maximum price from an array of products. */
+  const max = myProduct.reduce((max, item) =>  (item?.price > max ? item?.price : max), 0);
 
   return (
     <div style={{ display: "flex" }}>
@@ -305,16 +295,15 @@ console.log(filter.rate,"$");
             <Button
               key="link"
               type="primary"
-              loading={loading}
               onClick={
-                button === 0
+                changeButtonMode === 0
                   ? () => {
                       onHandleSubmit();
                       handleOk();
                     }
                   : () => {
-                      setButton(0);
-                      handleEditOk(val);
+                    setchangeButtonMode(0);
+                      handleEditOk(passingId);
                       handleOk();
                     }
               }
@@ -328,7 +317,7 @@ console.log(filter.rate,"$");
                 !showDetails.stock
               }
             >
-              {button === 0 ? "ADD" : "UPDATE"}{" "}
+              {changeButtonMode === 0 ? "ADD" : "UPDATE"}
             </Button>,
           ]}
         >
@@ -364,7 +353,7 @@ console.log(filter.rate,"$");
             placeholder="price"
           />
 
-          <br />
+          <br/>
           <input
             name="rating"
             style={{ height: "30px", width: "360px", marginBottom: "6px" }}
@@ -389,55 +378,49 @@ console.log(filter.rate,"$");
           />
           <br />
         </Modal>
-
         <Autocomplete
           multiple
           id="disabled-options-demo"
           options={categories}
-          value={filter.categ}
+          value={manageFilter.categoryType}
           onChange={(event, newValue) => {
-            setFilterto({ ...filter, categ: newValue });
+            setManageFilter({ ...manageFilter, categoryType: newValue });
           }}
           sx={{ width: 300 }}
           renderInput={(params) => <TextField {...params} label="CATEGORY" />}
         />
-        <br />
+        <br/>
         <Autocomplete
           multiple
           id="disabled-options-demo"
           options={BRAND}
-          value={filter.type}
+          value={manageFilter.brandType}
           getOptionLabel={(option) => option}
           onChange={(event, newValue) => {
-            setFilterto({ ...filter, type: newValue });
+            setManageFilter({ ...manageFilter, brandType: newValue });
           }}
           sx={{ width: 300 }}
           renderInput={(params) => <TextField {...params} label="BRAND" />}
         />
-        <br />
-        <br />
+        <br/>
+        <br/>
         <div>
           <h3>RATE</h3>
           <Rating
             name="simple-controlled"
-            value={filter.rate}
+            value={manageFilter.rate}
             onChange={(event, newValue) => {
-              setFilterto({ ...filter, rate:newValue });
+              setManageFilter({ ...manageFilter, rate:newValue });
             }}
           />
 
         </div>
         <div>
 
-<h3>Select price:{filter.pri && filter.pri + ' and below'}</h3>0<input type='range' min='0' max={max}
-
-onChange={(e) => setFilterto({...filter,pri:e.target.value})} value={filter.pri} />{max}</div>
-    
-        <button onClick={() => { setFilterto({type:[],categ:[],pri:'',rate:''});   }}>Clear</button>
-
-      </div>
-  
-
+<h3>Select price:{manageFilter.filterPrice && manageFilter.filterPrice + ' and below'}</h3>0<input type='range' min='0' max={max}
+onChange={(e) => setManageFilter({...manageFilter,filterPrice:e.target.value})} value={manageFilter.filterPrice} />{max}</div>
+<button onClick={() => { setManageFilter({brandType:[],categoryType:[],filterPrice:'',rate:''});   }}>Clear</button>
+</div>
       <div className="con2">
         <h3 style={{ float: "right" }}>
           TOTAL Number of Rows {filteredItems3.length}
@@ -501,7 +484,7 @@ onChange={(e) => setFilterto({...filter,pri:e.target.value})} value={filter.pri}
                         onClick={() => {
                           showModal();
                           showModal1(row, index);
-                          setButton(1);
+                          setchangeButtonMode(1);
                         }}
                       >
                         UPDATE
